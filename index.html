@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ARC | Kurumsal Yönetim</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -19,22 +23,24 @@
         .modal-overlay { background: rgba(0,0,0,0.2); backdrop-filter: blur(5px); position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 100; }
         .badge-user { background: #E8E8ED; color: #1D1D1F; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
         .label-apple { font-size: 11px; font-weight: 700; color: #86868B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block; }
+        .custom-scroll::-webkit-scrollbar { width: 5px; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #D2D2D7; border-radius: 10px; }
     </style>
 </head>
 <body>
 
     <div id="login-screen" class="login-screen">
         <div class="apple-card p-12 w-[400px] text-center">
-            <h2 class="text-3xl font-bold mb-2 tracking-tight">ARC <span class="text-blue-600">Giriş</span></h2>
-            <p class="text-gray-500 text-sm mb-8">Devam etmek için kimliğinizi doğrulayın.</p>
+            <h2 class="text-3xl font-bold mb-2 tracking-tight">ARC <span class="text-blue-600 font-medium text-4xl italic">Bulut</span></h2>
+            <p class="text-gray-500 text-sm mb-8 tracking-tighter font-medium">Ortak Operasyon Paneline Giriş Yapın.</p>
             <div class="space-y-4 text-left">
                 <div>
                     <label class="label-apple ml-1">Kullanıcı Adı</label>
-                    <input type="text" id="username" class="input-apple" placeholder="Örn: bajin">
+                    <input type="text" id="username" class="input-apple text-center uppercase text-xs tracking-widest font-bold" placeholder="Örn: bajin">
                 </div>
                 <div>
                     <label class="label-apple ml-1">Şifre</label>
-                    <input type="password" id="password" class="input-apple" placeholder="•••••">
+                    <input type="password" id="password" class="input-apple text-center" placeholder="•••••">
                 </div>
                 <button onclick="handleLogin()" class="btn-primary w-full py-4 mt-4 uppercase text-xs tracking-widest">Sisteme Bağlan</button>
             </div>
@@ -63,12 +69,12 @@
                 <h1 class="text-4xl font-extrabold tracking-tight italic">ARC <span class="text-blue-600 font-medium">Yönetim</span></h1>
                 <div class="flex items-center gap-3 mt-2">
                     <span id="active-user-display" class="badge-user"></span>
-                    <span class="text-[10px] text-green-500 font-bold uppercase tracking-widest animate-pulse">● Senkronize</span>
+                    <span class="text-[10px] text-green-500 font-bold uppercase tracking-widest animate-pulse">● Senkronize Edildi</span>
                 </div>
             </div>
             <div class="text-right">
-                <p class="label-apple mb-1">USD/TRY Piyasa Kuru</p>
-                <div id="usd-rate" class="text-2xl font-bold text-blue-600">--.----</div>
+                <p class="label-apple mb-1 text-right">Canlı USD/TRY Kuru</p>
+                <div id="usd-rate" class="text-2xl font-bold text-blue-600 tracking-tighter">--.----</div>
                 <button onclick="logout()" class="text-[10px] text-red-500 font-bold mt-2 uppercase hover:underline">Oturumu Kapat</button>
             </div>
         </nav>
@@ -89,19 +95,19 @@
             <div class="apple-card p-8">
                 <p class="label-apple">Depo Değeri</p>
                 <h2 id="inv-total-value" class="text-3xl font-bold tracking-tight text-gray-800">$0.00</h2>
-                <p class="text-[10px] font-bold text-green-600 mt-2 uppercase tracking-widest italic">Varlık Hazır</p>
+                <p class="text-[10px] font-bold text-green-600 mt-2 uppercase tracking-widest italic text-right">Varlık Hazır</p>
             </div>
             <div class="apple-card p-8">
                 <p class="label-apple">Toplam Birim</p>
                 <h2 id="total-qty-display" class="text-3xl font-bold tracking-tight text-gray-800">0</h2>
-                <p class="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest italic">Aktif Stok</p>
+                <p class="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest italic text-right">Aktif Stok</p>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-4">
                 <div class="apple-card p-8">
-                    <h3 class="text-lg font-bold mb-8">Üretim Girişi</h3>
+                    <h3 class="text-lg font-bold mb-8 italic">Üretim Girişi</h3>
                     <div class="space-y-6">
                         <div>
                             <label class="label-apple">Kategori Seçimi</label>
@@ -135,15 +141,14 @@
             <div class="lg:col-span-8">
                 <div class="apple-card p-8 min-h-[500px] flex flex-col">
                     <div class="flex justify-between items-center mb-8">
-                        <h3 class="text-lg font-bold tracking-tight">Depo Yönetimi</h3>
+                        <h3 class="text-lg font-bold tracking-tight italic text-blue-600">Aktif Depo</h3>
                         <button onclick="clearSystem()" class="text-[10px] font-bold text-red-500 uppercase tracking-widest px-3 py-1 bg-red-50 rounded-lg">Verileri Sıfırla</button>
                     </div>
                     
-                    <div id="inventory-list" class="space-y-4 max-h-[380px] overflow-y-auto pr-2 custom-scroll">
-                        </div>
+                    <div id="inventory-list" class="space-y-4 max-h-[380px] overflow-y-auto pr-2 custom-scroll"></div>
 
                     <div class="mt-auto pt-8 border-t border-gray-100">
-                        <p class="label-apple mb-4">Son Faaliyetler</p>
+                        <p class="label-apple mb-4">Son İşlemler</p>
                         <div class="flex gap-4 overflow-x-auto pb-2" id="sales-log"></div>
                     </div>
                 </div>
@@ -152,6 +157,21 @@
     </div>
 
     <script>
+        // --- BAĞLANTI AYARLARI ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyCQ_bVjIl75W685NgZbTEhLmkOHiTgft2g",
+            authDomain: "arc-depo.firebaseapp.com",
+            databaseURL: "https://arc-depo-default-rtdb.firebaseio.com",
+            projectId: "arc-depo",
+            storageBucket: "arc-depo.firebasestorage.app",
+            messagingSenderId: "820975195853",
+            appId: "1:820975195853:web:0af0978b57294556ad3b84",
+            measurementId: "G-T72FTQZ5QB"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
         const USERS = { "bajin": "12345", "hewyq": "12345", "dodo": "12345" };
         let currentUsd = 43.98;
         const COMMISSION = 0.90;
@@ -165,7 +185,7 @@
                 document.getElementById('login-screen').style.display = 'none';
                 document.getElementById('main-content').style.display = 'block';
                 document.getElementById('active-user-display').innerText = u;
-                init();
+                syncData();
             } else {
                 document.getElementById('login-error').classList.remove('hidden');
             }
@@ -173,65 +193,50 @@
 
         function logout() { sessionStorage.clear(); location.reload(); }
 
-        let inventory, soldTotal, logs;
-
-        function loadData() {
-            inventory = JSON.parse(localStorage.getItem('arc_shared_inv_v2') || '[]');
-            soldTotal = JSON.parse(localStorage.getItem('arc_shared_sold_v2') || '0');
-            logs = JSON.parse(localStorage.getItem('arc_shared_logs_v2') || '[]');
+        // --- BULUT SENKRONİZASYON MOTORU ---
+        function syncData() {
+            // Veritabanını canlı dinle
+            db.ref('shared_data').on('value', snapshot => {
+                const data = snapshot.val() || { inventory: [], soldTotal: 0, logs: [] };
+                render(data.inventory || [], data.soldTotal || 0, data.logs || []);
+            });
+            fetchRate();
         }
 
-        function save() {
-            localStorage.setItem('arc_shared_inv_v2', JSON.stringify(inventory));
-            localStorage.setItem('arc_shared_sold_v2', JSON.stringify(soldTotal));
-            localStorage.setItem('arc_shared_logs_v2', JSON.stringify(logs.slice(0, 30)));
+        async function fetchRate() {
+            const rateDisplay = document.getElementById('usd-rate');
+            try {
+                const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const data = await response.json();
+                currentUsd = data.rates.TRY;
+                rateDisplay.innerText = currentUsd.toFixed(4) + ' TL';
+                // Veriyi çekince tekrar render et ki TL değerleri güncellensin
+                db.ref('shared_data').once('value', s => {
+                    const d = s.val();
+                    if(d) render(d.inventory || [], d.soldTotal || 0, d.logs || []);
+                });
+            } catch (e) {
+                rateDisplay.innerText = '43.9800 TL (Yedek)';
+            }
         }
-
-// --- CANLI KUR ÇEKME MOTORU (TCMB UYUMLU) ---
-async function fetchRate() {
-    const rateDisplay = document.getElementById('usd-rate');
-    
-    // Yöntem 1: Finans Truncgil (Hızlı ve TCMB odaklı)
-    try {
-        const response = await fetch('https://finans.truncgil.com/today.json');
-        const data = await response.json();
-        if(data["ABD DOLARI"] && data["ABD DOLARI"].Selling) {
-            currentUsd = parseFloat(data["ABD DOLARI"].Selling.replace(",", "."));
-            rateDisplay.innerText = currentUsd.toFixed(4) + ' TL';
-            render();
-            return;
-        }
-    } catch (e) { console.log("Yöntem 1 başarısız, Yöntem 2 deneniyor..."); }
-
-    // Yöntem 2: ExchangeRate API (Yedek)
-    try {
-        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-        const data = await response.json();
-        currentUsd = data.rates.TRY;
-        rateDisplay.innerText = currentUsd.toFixed(4) + ' TL';
-        render();
-    } catch (e) {
-        rateDisplay.innerText = '43.9800 TL (Manuel)';
-        console.error("Kur verisi çekilemedi.");
-    }
-}
 
         function addToInventory() {
             const type = document.getElementById('prod-type').value;
-            const qty = parseInt(document.getElementById('prod-qty').value) || 0;
-            const mult = parseInt(document.getElementById('prod-mult').value) || 1;
+            const qty = (parseInt(document.getElementById('prod-qty').value) || 0) * (parseInt(document.getElementById('prod-mult').value) || 1);
             const price = parseFloat(document.getElementById('prod-price').value) || 0;
             if(qty <= 0) return;
-            inventory.push({ id: Date.now(), name: type, totalQty: qty * mult, price: price });
-            save(); render();
+
+            db.ref('shared_data/inventory').once('value', s => {
+                const inv = s.val() || [];
+                inv.push({ id: Date.now(), name: type, totalQty: qty, price: price });
+                db.ref('shared_data/inventory').set(inv);
+            });
         }
 
-        function openSellModal(id) {
-            const item = inventory.find(i => i.id === id);
-            if(!item) return;
+        function openSellModal(id, qty) {
             activeSellId = id;
-            document.getElementById('modal-item-name').innerText = item.name + ` (${item.totalQty} Stok Mevcut)`;
-            document.getElementById('sell-qty-input').value = item.totalQty;
+            document.getElementById('modal-item-name').innerText = `Stok: ${qty} Adet`;
+            document.getElementById('sell-qty-input').value = qty;
             document.getElementById('sell-modal').style.display = 'flex';
         }
 
@@ -239,21 +244,27 @@ async function fetchRate() {
 
         function confirmPartialSell() {
             const sellQty = parseInt(document.getElementById('sell-qty-input').value) || 0;
-            const idx = inventory.findIndex(i => i.id === activeSellId);
-            if(idx === -1 || sellQty <= 0 || sellQty > inventory[idx].totalQty) return;
-            
-            const item = inventory[idx];
-            const netGain = (sellQty * item.price) * COMMISSION;
-            soldTotal += netGain;
-            logs.unshift({ date: new Date().toLocaleTimeString(), desc: sellQty + 'x ' + item.name, gain: netGain });
-            
-            if(sellQty === item.totalQty) inventory.splice(idx, 1);
-            else inventory[idx].totalQty -= sellQty;
+            db.ref('shared_data').once('value', snapshot => {
+                const data = snapshot.val();
+                const idx = data.inventory.findIndex(i => i.id === activeSellId);
+                if(idx === -1 || sellQty <= 0 || sellQty > data.inventory[idx].totalQty) return;
 
-            save(); render(); closeModal();
+                const item = data.inventory[idx];
+                const netGain = (sellQty * item.price) * COMMISSION;
+                
+                data.soldTotal = (data.soldTotal || 0) + netGain;
+                if(!data.logs) data.logs = [];
+                data.logs.unshift({ date: new Date().toLocaleTimeString(), desc: sellQty + 'x ' + item.name, gain: netGain });
+                
+                if(sellQty === item.totalQty) data.inventory.splice(idx, 1);
+                else data.inventory[idx].totalQty -= sellQty;
+
+                db.ref('shared_data').set(data);
+                closeModal();
+            });
         }
 
-        function render() {
+        function render(inventory, soldTotal, logs) {
             const splitVal = soldTotal / 3;
             document.getElementById('sold-vault').innerText = '$' + soldTotal.toLocaleString('en-US', {minimumFractionDigits: 2});
             document.getElementById('sold-vault-tl').innerText = (soldTotal * currentUsd).toLocaleString('tr-TR') + ' TL';
@@ -269,34 +280,39 @@ async function fetchRate() {
                     <div>
                         <p class="label-apple text-blue-600 mb-1">${item.name}</p>
                         <h4 class="text-xl font-bold text-gray-800">${item.totalQty.toLocaleString()} <span class="text-xs text-gray-400">Adet</span></h4>
-                        <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase">Birim: $${item.price.toFixed(2)}</p>
+                        <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">Birim: $${item.price.toFixed(2)}</p>
                     </div>
                     <div class="flex items-center gap-10">
                         <div class="text-right">
                             <p class="label-apple">Varlık Değeri</p>
                             <p class="text-lg font-bold text-gray-800 tracking-tight">$${val.toFixed(2)}</p>
                         </div>
-                        <button onclick="openSellModal(${item.id})" class="btn-action uppercase text-[10px] tracking-widest">Onayla</button>
+                        <button onclick="openSellModal(${item.id}, ${item.totalQty})" class="btn-action uppercase text-[10px] tracking-widest">Onayla</button>
                     </div>
                 </div>`;
-            }).join('') : `<p class="text-center py-20 text-gray-400 italic">Depo şu an boş.</p>`;
+            }).join('') : `<p class="text-center py-20 text-gray-400 italic font-medium">Depo şu an boş. Üretim girilmesini bekliyor...</p>`;
 
             document.getElementById('inv-total-value').innerText = '$' + tVal.toFixed(2);
             document.getElementById('total-qty-display').innerText = tQty.toLocaleString();
             document.getElementById('sales-log').innerHTML = logs.map(l => `
-                <div class="flex-shrink-0 bg-white p-4 rounded-xl border border-gray-100 min-w-[140px] text-center">
-                    <p class="text-[9px] font-bold text-gray-400 uppercase">${l.date}</p><p class="text-xs font-bold text-gray-800">${l.desc}</p><p class="text-sm font-bold text-blue-600">+$${l.gain.toFixed(2)}</p>
+                <div class="flex-shrink-0 bg-white p-4 rounded-xl border border-gray-100 min-w-[140px] text-center shadow-sm">
+                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">${l.date}</p>
+                    <p class="text-xs font-bold text-gray-800">${l.desc}</p>
+                    <p class="text-sm font-bold text-blue-600">+$${l.gain.toFixed(2)}</p>
                 </div>`).join('');
         }
 
-        function clearSystem() { if(confirm('Tüm ortak veriler sıfırlansın mı?')) { localStorage.clear(); location.reload(); } }
-        function init() { loadData(); fetchRate(); }
+        function clearSystem() { 
+            if(confirm('Tüm bulut verileri (Envanter ve Kasa) sıfırlanacak! Emin misiniz?')) {
+                db.ref('shared_data').set({ inventory: [], soldTotal: 0, logs: [] });
+            } 
+        }
 
         if(sessionStorage.getItem('arc_user')) {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('main-content').style.display = 'block';
             document.getElementById('active-user-display').innerText = sessionStorage.getItem('arc_user');
-            init();
+            syncData();
         }
     </script>
 </body>
