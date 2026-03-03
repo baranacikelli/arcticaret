@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ARC | Kurumsal Yönetim</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #F5F5F7; color: #1D1D1F; font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; zoom: 0.88; }
+        .apple-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(25px); border: 1px solid rgba(255, 255, 255, 0.4); border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.03); }
+        .login-screen { position: fixed; inset: 0; background: #F5F5F7; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .input-apple { background: #FFFFFF; border: 1px solid #D2D2D7; border-radius: 12px; padding: 14px; outline: none; transition: 0.2s; width: 100%; font-weight: 500; }
+        .input-apple:focus { border-color: #0071E3; box-shadow: 0 0 0 4px rgba(0, 113, 227, 0.1); }
+        .btn-primary { background-color: #0071E3; color: white; border-radius: 14px; font-weight: 600; transition: 0.2s; border: none; cursor: pointer; }
+        .btn-primary:hover { background-color: #0077ED; }
+        .btn-action { background-color: #F5F5F7; color: #0071E3; border-radius: 10px; font-weight: 600; border: none; cursor: pointer; padding: 8px 16px; }
+        .modal-overlay { background: rgba(0,0,0,0.2); backdrop-filter: blur(5px); position: fixed; inset: 0; display: none; align-items: center; justify-content: center; z-index: 100; }
+        .badge-user { background: #E8E8ED; color: #1D1D1F; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+        .label-apple { font-size: 11px; font-weight: 700; color: #86868B; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; display: block; }
+    </style>
+</head>
+<body>
+
+    <div id="login-screen" class="login-screen">
+        <div class="apple-card p-12 w-[400px] text-center">
+            <h2 class="text-3xl font-bold mb-2 tracking-tight">ARC <span class="text-blue-600">Giriş</span></h2>
+            <p class="text-gray-500 text-sm mb-8">Devam etmek için kimliğinizi doğrulayın.</p>
+            <div class="space-y-4 text-left">
+                <div>
+                    <label class="label-apple ml-1">Kullanıcı Adı</label>
+                    <input type="text" id="username" class="input-apple" placeholder="Örn: bajin">
+                </div>
+                <div>
+                    <label class="label-apple ml-1">Şifre</label>
+                    <input type="password" id="password" class="input-apple" placeholder="•••••">
+                </div>
+                <button onclick="handleLogin()" class="btn-primary w-full py-4 mt-4 uppercase text-xs tracking-widest">Sisteme Bağlan</button>
+            </div>
+            <p id="login-error" class="text-red-500 text-xs mt-4 hidden font-medium">Hatalı giriş denemesi.</p>
+        </div>
+    </div>
+
+    <div id="sell-modal" class="modal-overlay">
+        <div class="apple-card p-8 w-80 bg-white">
+            <h4 class="font-bold mb-4 text-center">Satış Onayı</h4>
+            <p id="modal-item-name" class="text-[10px] text-center text-blue-600 font-bold uppercase tracking-widest mb-4"></p>
+            <div>
+                <label class="label-apple text-center">Satılan Adet</label>
+                <input type="number" id="sell-qty-input" class="input-apple mb-6 text-center text-xl font-bold">
+            </div>
+            <div class="flex gap-3">
+                <button onclick="closeModal()" class="btn-action flex-1 py-3 text-xs">VAZGEÇ</button>
+                <button onclick="confirmPartialSell()" class="btn-primary flex-1 py-3 text-xs">ONAYLA</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="main-content" class="p-10 max-w-7xl mx-auto hidden">
+        <nav class="flex justify-between items-end mb-12">
+            <div>
+                <h1 class="text-4xl font-extrabold tracking-tight italic">ARC <span class="text-blue-600 font-medium">Yönetim</span></h1>
+                <div class="flex items-center gap-3 mt-2">
+                    <span id="active-user-display" class="badge-user"></span>
+                    <span class="text-[10px] text-green-500 font-bold uppercase tracking-widest animate-pulse">● Senkronize</span>
+                </div>
+            </div>
+            <div class="text-right">
+                <p class="label-apple mb-1">USD/TRY Piyasa Kuru</p>
+                <div id="usd-rate" class="text-2xl font-bold text-blue-600">--.----</div>
+                <button onclick="logout()" class="text-[10px] text-red-500 font-bold mt-2 uppercase hover:underline">Oturumu Kapat</button>
+            </div>
+        </nav>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
+            <div class="apple-card p-8 md:col-span-2 border-l-[6px] border-blue-500 flex justify-between items-start">
+                <div>
+                    <p class="label-apple">Toplam Kasa Değeri</p>
+                    <h2 id="sold-vault" class="text-5xl font-bold tracking-tight text-blue-600">$0.00</h2>
+                    <p id="sold-vault-tl" class="text-sm font-semibold text-gray-500 mt-2">0.00 TL</p>
+                </div>
+                <div class="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 min-w-[160px]">
+                    <p class="label-apple text-blue-400">Kişi Başı (1/3)</p>
+                    <p id="split-val" class="text-2xl font-bold text-blue-600 leading-tight">$0.00</p>
+                    <p id="split-val-tl" class="text-[11px] font-bold text-blue-400 mt-1 italic">0.00 TL</p>
+                </div>
+            </div>
+            <div class="apple-card p-8">
+                <p class="label-apple">Depo Değeri</p>
+                <h2 id="inv-total-value" class="text-3xl font-bold tracking-tight text-gray-800">$0.00</h2>
+                <p class="text-[10px] font-bold text-green-600 mt-2 uppercase tracking-widest italic">Varlık Hazır</p>
+            </div>
+            <div class="apple-card p-8">
+                <p class="label-apple">Toplam Birim</p>
+                <h2 id="total-qty-display" class="text-3xl font-bold tracking-tight text-gray-800">0</h2>
+                <p class="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-widest italic">Aktif Stok</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div class="lg:col-span-4">
+                <div class="apple-card p-8">
+                    <h3 class="text-lg font-bold mb-8">Üretim Girişi</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <label class="label-apple">Kategori Seçimi</label>
+                            <select id="prod-type" class="input-apple font-bold text-sm appearance-none">
+                                <option value="Bobcat IV">Bobcat IV</option>
+                                <option value="Tempest IV">Tempest IV</option>
+                                <option value="Survival Mod 3">Survival Mod 3</option>
+                                <option value="Il Toro IV">Il Toro IV</option>
+                                <option value="Raider Key">Raider Key</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="label-apple">Adet</label>
+                                <input type="number" id="prod-qty" value="1" class="input-apple text-center font-bold">
+                            </div>
+                            <div>
+                                <label class="label-apple">Tur</label>
+                                <input type="number" id="prod-mult" value="1" class="input-apple text-center font-bold">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="label-apple">Birim Fiyat ($)</label>
+                            <input type="number" id="prod-price" value="1.00" step="0.1" class="input-apple text-center font-bold text-blue-600">
+                        </div>
+                        <button onclick="addToInventory()" class="btn-primary w-full py-4 text-xs tracking-widest uppercase">Envantere Gönder</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-8">
+                <div class="apple-card p-8 min-h-[500px] flex flex-col">
+                    <div class="flex justify-between items-center mb-8">
+                        <h3 class="text-lg font-bold tracking-tight">Depo Yönetimi</h3>
+                        <button onclick="clearSystem()" class="text-[10px] font-bold text-red-500 uppercase tracking-widest px-3 py-1 bg-red-50 rounded-lg">Verileri Sıfırla</button>
+                    </div>
+                    
+                    <div id="inventory-list" class="space-y-4 max-h-[380px] overflow-y-auto pr-2 custom-scroll">
+                        </div>
+
+                    <div class="mt-auto pt-8 border-t border-gray-100">
+                        <p class="label-apple mb-4">Son Faaliyetler</p>
+                        <div class="flex gap-4 overflow-x-auto pb-2" id="sales-log"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const USERS = { "bajin": "12345", "hewyq": "12345", "dodo": "12345" };
+        let currentUsd = 43.98;
+        const COMMISSION = 0.90;
+        let activeSellId = null;
+
+        function handleLogin() {
+            const u = document.getElementById('username').value.toLowerCase();
+            const p = document.getElementById('password').value;
+            if(USERS[u] && USERS[u] === p) {
+                sessionStorage.setItem('arc_user', u);
+                document.getElementById('login-screen').style.display = 'none';
+                document.getElementById('main-content').style.display = 'block';
+                document.getElementById('active-user-display').innerText = u;
+                init();
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+
+        function logout() { sessionStorage.clear(); location.reload(); }
+
+        let inventory, soldTotal, logs;
+
+        function loadData() {
+            inventory = JSON.parse(localStorage.getItem('arc_shared_inv_v2') || '[]');
+            soldTotal = JSON.parse(localStorage.getItem('arc_shared_sold_v2') || '0');
+            logs = JSON.parse(localStorage.getItem('arc_shared_logs_v2') || '[]');
+        }
+
+        function save() {
+            localStorage.setItem('arc_shared_inv_v2', JSON.stringify(inventory));
+            localStorage.setItem('arc_shared_sold_v2', JSON.stringify(soldTotal));
+            localStorage.setItem('arc_shared_logs_v2', JSON.stringify(logs.slice(0, 30)));
+        }
+
+// --- CANLI KUR ÇEKME MOTORU (TCMB UYUMLU) ---
+async function fetchRate() {
+    const rateDisplay = document.getElementById('usd-rate');
+    
+    // Yöntem 1: Finans Truncgil (Hızlı ve TCMB odaklı)
+    try {
+        const response = await fetch('https://finans.truncgil.com/today.json');
+        const data = await response.json();
+        if(data["ABD DOLARI"] && data["ABD DOLARI"].Selling) {
+            currentUsd = parseFloat(data["ABD DOLARI"].Selling.replace(",", "."));
+            rateDisplay.innerText = currentUsd.toFixed(4) + ' TL';
+            render();
+            return;
+        }
+    } catch (e) { console.log("Yöntem 1 başarısız, Yöntem 2 deneniyor..."); }
+
+    // Yöntem 2: ExchangeRate API (Yedek)
+    try {
+        const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+        const data = await response.json();
+        currentUsd = data.rates.TRY;
+        rateDisplay.innerText = currentUsd.toFixed(4) + ' TL';
+        render();
+    } catch (e) {
+        rateDisplay.innerText = '43.9800 TL (Manuel)';
+        console.error("Kur verisi çekilemedi.");
+    }
+}
+
+        function addToInventory() {
+            const type = document.getElementById('prod-type').value;
+            const qty = parseInt(document.getElementById('prod-qty').value) || 0;
+            const mult = parseInt(document.getElementById('prod-mult').value) || 1;
+            const price = parseFloat(document.getElementById('prod-price').value) || 0;
+            if(qty <= 0) return;
+            inventory.push({ id: Date.now(), name: type, totalQty: qty * mult, price: price });
+            save(); render();
+        }
+
+        function openSellModal(id) {
+            const item = inventory.find(i => i.id === id);
+            if(!item) return;
+            activeSellId = id;
+            document.getElementById('modal-item-name').innerText = item.name + ` (${item.totalQty} Stok Mevcut)`;
+            document.getElementById('sell-qty-input').value = item.totalQty;
+            document.getElementById('sell-modal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('sell-modal').style.display = 'none'; }
+
+        function confirmPartialSell() {
+            const sellQty = parseInt(document.getElementById('sell-qty-input').value) || 0;
+            const idx = inventory.findIndex(i => i.id === activeSellId);
+            if(idx === -1 || sellQty <= 0 || sellQty > inventory[idx].totalQty) return;
+            
+            const item = inventory[idx];
+            const netGain = (sellQty * item.price) * COMMISSION;
+            soldTotal += netGain;
+            logs.unshift({ date: new Date().toLocaleTimeString(), desc: sellQty + 'x ' + item.name, gain: netGain });
+            
+            if(sellQty === item.totalQty) inventory.splice(idx, 1);
+            else inventory[idx].totalQty -= sellQty;
+
+            save(); render(); closeModal();
+        }
+
+        function render() {
+            const splitVal = soldTotal / 3;
+            document.getElementById('sold-vault').innerText = '$' + soldTotal.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('sold-vault-tl').innerText = (soldTotal * currentUsd).toLocaleString('tr-TR') + ' TL';
+            document.getElementById('split-val').innerText = '$' + splitVal.toLocaleString('en-US', {minimumFractionDigits: 2});
+            document.getElementById('split-val-tl').innerText = (splitVal * currentUsd).toLocaleString('tr-TR') + ' TL';
+
+            const invList = document.getElementById('inventory-list');
+            let tVal = 0, tQty = 0;
+            invList.innerHTML = inventory.length ? inventory.map(item => {
+                const val = item.totalQty * item.price;
+                tVal += val; tQty += item.totalQty;
+                return `<div class="bg-white p-6 rounded-2xl border border-gray-100 flex justify-between items-center hover:shadow-md transition-all">
+                    <div>
+                        <p class="label-apple text-blue-600 mb-1">${item.name}</p>
+                        <h4 class="text-xl font-bold text-gray-800">${item.totalQty.toLocaleString()} <span class="text-xs text-gray-400">Adet</span></h4>
+                        <p class="text-[10px] font-bold text-gray-400 mt-1 uppercase">Birim: $${item.price.toFixed(2)}</p>
+                    </div>
+                    <div class="flex items-center gap-10">
+                        <div class="text-right">
+                            <p class="label-apple">Varlık Değeri</p>
+                            <p class="text-lg font-bold text-gray-800 tracking-tight">$${val.toFixed(2)}</p>
+                        </div>
+                        <button onclick="openSellModal(${item.id})" class="btn-action uppercase text-[10px] tracking-widest">Onayla</button>
+                    </div>
+                </div>`;
+            }).join('') : `<p class="text-center py-20 text-gray-400 italic">Depo şu an boş.</p>`;
+
+            document.getElementById('inv-total-value').innerText = '$' + tVal.toFixed(2);
+            document.getElementById('total-qty-display').innerText = tQty.toLocaleString();
+            document.getElementById('sales-log').innerHTML = logs.map(l => `
+                <div class="flex-shrink-0 bg-white p-4 rounded-xl border border-gray-100 min-w-[140px] text-center">
+                    <p class="text-[9px] font-bold text-gray-400 uppercase">${l.date}</p><p class="text-xs font-bold text-gray-800">${l.desc}</p><p class="text-sm font-bold text-blue-600">+$${l.gain.toFixed(2)}</p>
+                </div>`).join('');
+        }
+
+        function clearSystem() { if(confirm('Tüm ortak veriler sıfırlansın mı?')) { localStorage.clear(); location.reload(); } }
+        function init() { loadData(); fetchRate(); }
+
+        if(sessionStorage.getItem('arc_user')) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('main-content').style.display = 'block';
+            document.getElementById('active-user-display').innerText = sessionStorage.getItem('arc_user');
+            init();
+        }
+    </script>
+</body>
+</html>
